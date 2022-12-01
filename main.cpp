@@ -199,6 +199,33 @@ void multiPointSP() {
 	for (int i = 0; i < m; ++i) {
 		std::cin >> a[i];
 	}
+	std::vector<bool> vis(m, false);
+	std::vector<int> cur;
+	int ans = 0x3f3f3f3f;
+	std::function<int(int)> dfs = [&](int u) {
+		vis[u] = true;
+		int ret = 0x3f3f3f3f;
+		for (auto [v, t, w]: points[u].e) {
+			cur.push_back(v);
+			dfs(v);
+			cur.pop_back();
+		}
+		vis[u] = false;
+		return ret;
+	};
+	for (int i = 0; i < m; ++i) {
+		int tmp = dfs(i);
+		if (ans < tmp) {
+
+		} else {
+
+		}
+	}
+	if (ans == 0x3f3f3f3f) {
+		std::cout << "Can not reach!" << std::endl;
+	} else {
+
+	}
 };
 
 void menu() {
