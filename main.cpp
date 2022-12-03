@@ -149,7 +149,8 @@ void tarjan() {
 	for (int i = 0; i < n; ++i) {
 		if (dfn[i] == -1)dfs(i, i);
 	}
-	int num = std::count(cut.begin(), cut.end(), true);
+	int num = 0;
+	for (int i = 0; i < n; ++i)if (cut[i])num++;
 	if (num) {
 		std::cout << "There " << (num == 1 ? "is" : "ares") << num << " cut point" << (num == 1 ? ":" : "s:") << std::endl;
 		for (int i = 0; i < n; ++i) {
@@ -189,7 +190,6 @@ void showAllPath() {
 	} else {
 		std::cout << "No path!" << std::endl;
 	}
-
 }
 
 void multiPointSP() {
@@ -199,34 +199,58 @@ void multiPointSP() {
 	for (int i = 0; i < m; ++i) {
 		std::cin >> a[i];
 	}
-	std::vector<bool> vis(m, false);
-	std::vector<int> cur;
 	int ans = 0x3f3f3f3f;
-	std::function<int(int)> dfs = [&](int u) {
-		vis[u] = true;
-		int ret = 0x3f3f3f3f;
-		for (auto [v, t, w]: points[u].e) {
-			cur.push_back(v);
-			dfs(v);
-			cur.pop_back();
-		}
-		vis[u] = false;
-		return ret;
-	};
-	for (int i = 0; i < m; ++i) {
-		int tmp = dfs(i);
-		if (ans < tmp) {
-
+	int cur = 0;
+	bool ok = true;
+	std::vector<int> routine;
+	for (int i = 1; i < m; ++i) {
+		if (dis[a[i - 1]][a[i]] == 0x3f3f3f3f) {
+			ok = false;
 		} else {
-
+			cur += dis[a[i - 1]][a[i]];
 		}
 	}
-	if (ans == 0x3f3f3f3f) {
-		std::cout << "Can not reach!" << std::endl;
+	if (ok) {
+		for (int i = 1; i < m; ++i) {
+			int now = a[i - 1];
+			while (now != a[i]) {
+				routine.push_back(now);
+				now = nxt[now][a[i]];
+			}
+		}
 	} else {
-
+		std::cout << "No path!" << std::endl;
 	}
 };
+
+void modify() {
+	std::string s, r;
+	std::cin >> s >> r;
+	int begin = names[s], end = names[r];
+	int wp, tp;
+	std::cin >> wp >> tp;
+	bool find = false;
+	for (auto& [v, t, w]: points[begin].e) {
+		if (v == end) {
+			t = tp;
+			w = wp;
+			find = true;
+			break;
+		}
+	}
+	for (auto& [v, t, w]: points[end].e) {
+		if (v == begin) {
+			t = tp;
+			w = wp;
+			find = true;
+			break;
+		}
+	}
+	if (!find) {
+		points[begin].e.emplace_back(end, tp, wp);
+		points[end].e.emplace_back(begin, tp, wp);
+	}
+}
 
 void menu() {
 	std::cout << "-------------------------------------------------------------------" << std::endl;
