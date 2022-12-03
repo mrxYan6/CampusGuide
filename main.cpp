@@ -18,9 +18,14 @@ struct edge {
 	int len;
 	std::vector<std::pair<int, int>> info;
 
-	edge() : type(0), len(0) {}
+	edge() {
+		u = -1;
+		v = -1;
+		type = 0;
+		len = 0;
+	}
 
-	edge(int u, int v, int type, int len) : type(type), len(len) {}
+	edge(int u, int v, int type, int len) : u(u), v(v), type(type), len(len) {}
 
 	void show() {
 		static char di[4] = {'n', 'w', 'e', 's'};
@@ -36,19 +41,24 @@ struct point {
 	std::string name;
 	std::vector<std::string> intro;
 
+	point() {
+		id = -1;
+	}
+
 	void show() {
 		std::cout << name << ":";
 		for (auto& str: intro)std::cout << str << ' ';
 	}
 };
 
+int n;
+int curType;
 std::vector<point> points;
 std::map<std::string, int> names;
 std::vector<std::vector<int>> dis, nxt;
-std::vector<std::vector<edge>> cur;
 std::vector<std::vector<edge>> mat;
-int n;
-int curType;
+
+void menu();
 
 void floyd() {
 	for (int k = 0; k < n; ++k) {
@@ -73,7 +83,6 @@ void build(int type) {
 				auto [_u, _v, t, w, _] = x;
 				if (t & type) {
 					if (dis[i][j] > w) {
-						cur[i][j] = x;
 						dis[i][j] = w;
 					}
 				}
@@ -106,8 +115,7 @@ void init() {
 
 	dis = std::vector(n, std::vector<int>(n, 0x3f3f3f3f));
 	nxt = std::vector(n, std::vector<int>(n, -1));
-	cur = std::vector(n, std::vector<edge>(n));
-
+	mat = std::vector(n, std::vector<edge>(n));
 	int m;
 	std::cin >> m;
 	for (int i = 0; i < m; ++i) {
@@ -134,7 +142,7 @@ void init() {
 			x.first = x.first ^ 3;
 		}
 		mat[u][v] = pos;
-		mat[v][w] = neg;
+		mat[v][u] = neg;
 	}
 
 	build(3);
@@ -151,6 +159,7 @@ void qrySpot() {
 	} else {
 		std::cout << "Spot not found" << std::endl;
 	}
+	menu();
 }
 
 void shortestPath() {
@@ -164,9 +173,9 @@ void shortestPath() {
 	std::cin >> s >> r;
 	int u = names[s], v = names[r];
 	if (dis[u][v] == 0x3f3f3f3f) {
-		std::cout << "The minimum distance is" << dis[u][v] << '\n';
+		std::cout << "No path!" << std::endl;
+
 	} else {
-		std::cout << "The minimum distance is" << dis[u][v] << '\n';
 		std::cout << "The routine distance is" << dis[u][v] << '\n';
 		int now = nxt[u][v];
 		while (now != u) {
@@ -174,6 +183,7 @@ void shortestPath() {
 			now = nxt[now][u];
 		}
 	}
+	menu();
 }
 
 void tarjan() {
@@ -214,6 +224,8 @@ void tarjan() {
 	} else {
 		std::cout << "There is no cut point!" << std::endl;
 	}
+	menu();
+
 }
 
 void showAllPath() {
@@ -243,7 +255,7 @@ void showAllPath() {
 	if (cnt) {
 		std::cout << "There " << (cnt == 1 ? "is" : "ares") << cnt << " path" << (cnt == 1 ? ":" : "s:") << std::endl;
 		for (auto& x: paths) {
-			int m = x.size();
+			int m = int(x.size());
 			for (int i = 1; i < m; ++i) {
 				mat[x[i - 1]][x[i]].show();
 			}
@@ -251,6 +263,8 @@ void showAllPath() {
 	} else {
 		std::cout << "No path!" << std::endl;
 	}
+	menu();
+
 }
 
 void multiPointSP() {
@@ -282,6 +296,8 @@ void multiPointSP() {
 	} else {
 		std::cout << "No path!" << std::endl;
 	}
+	menu();
+
 };
 
 void modify_r() {
@@ -300,6 +316,8 @@ void modify_r() {
 	}
 	mat[u][v] = now;
 	std::cout << "Succeed" << std::endl;
+	menu();
+
 }
 
 void modify_p() {
@@ -315,6 +333,7 @@ void modify_p() {
 	}
 	names[points[i].name] = i;
 	names[std::to_string(i + 1)] = i;
+	menu();
 }
 
 void menu() {
@@ -327,6 +346,33 @@ void menu() {
 	std::cout << "|       6.Modify road information                                 |" << std::endl;
 	std::cout << "|       7.Modify spot information                                 |" << std::endl;
 	std::cout << "-------------------------------------------------------------------" << std::endl;
+	int opt;
+	std::cin >> opt;
+	switch (opt) {
+		case 1:
+			qrySpot();
+			break;
+		case 2:
+			shortestPath();
+			break;
+		case 3:
+			tarjan();
+			break;
+		case 4:
+			showAllPath();
+			break;
+		case 5:
+			multiPointSP();
+			break;
+		case 6:
+			modify_r();
+			break;
+		case 7:
+			modify_p();
+			break;
+		default:
+			menu();
+	}
 }
 
 int main() {
