@@ -17,7 +17,7 @@ struct edge {
 	int len;
 	std::vector<std::pair<int, int>> info;
 
-	edge() {}
+	edge() : type(0), len(0) {}
 
 	edge(int type, int len) : type(type), len(len) {}
 };
@@ -26,13 +26,18 @@ struct point {
 	int id;
 	std::string name;
 	std::vector<std::string> intro;
+
+	void show() {
+		std::cout << name << ":";
+		for (auto& str: intro)std::cout << str << ' ';
+	}
 };
 
 std::vector<point> points;
 std::map<std::string, int> names;
 std::vector<std::vector<int>> dis, nxt;
 std::vector<std::vector<edge>> cur;
-std::vector<std::vector<std::vector<edge>>> mat;
+std::vector<std::vector<edge>> mat;
 int n;
 int curType;
 
@@ -55,19 +60,23 @@ void build(int type) {
 		nxt = std::vector(n, std::vector<int>(n, -1));
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < n; ++j) {
-				for (auto& x: mat[i][j]) {
-					auto [t, w, _] = x;
-					if (t & type) {
-						if (dis[i][j] > w) {
-							cur[i][j] = x;
-							dis[i][j] = w;
-						}
+				auto x = mat[i][j];
+				auto [t, w, _] = x;
+				if (t & type) {
+					if (dis[i][j] > w) {
+						cur[i][j] = x;
+						dis[i][j] = w;
 					}
 				}
 			}
 		}
 		curType = type;
 	}
+}
+
+void sp(int x) {
+	build(x);
+	floyd();
 }
 
 void init() {
@@ -88,27 +97,37 @@ void init() {
 
 	dis = std::vector(n, std::vector<int>(n, 0x3f3f3f3f));
 	nxt = std::vector(n, std::vector<int>(n, -1));
+	cur = std::vector(n, std::vector<edge>(n));
+
 	int m;
 	std::cin >> m;
 	for (int i = 0; i < m; ++i) {
 		int u, v, w, type;
-		int t;
 		std::cin >> u >> v >> w >> type;
 		u--, v--;
+
+		edge pos(w, type);
+
+		int t;
 		std::cin >> t;
 		for (int j = 0; j < t; ++j) {
-
+			int dir;//w - western 1,e - eastern 2, s - south 3, n - north 0
+			int len;
+			std::cin >> dir >> len;
+			pos.info.emplace_back(dir, len);
 		}
-		mat[u][v].emplace_back(w, type);
-		mat[v][w].emplace_back(w, type);
 
-//		points[u].e.emplace_back(v, w, type);
-//		points[v].e.emplace_back(u, w, type);
+		//generate another edge
+		auto neg = pos;
+		std::reverse(neg.info.begin(), neg.info.end());
+		for (auto& x: neg.info) {
+			x.first = x.first ^ 3;
+		}
+		mat[u][v] = pos;
+		mat[v][w] = neg;
 	}
 
 	build(3);
-
-	floyd();
 }
 
 void qrySpot() {
@@ -117,8 +136,7 @@ void qrySpot() {
 	std::cin >> x;
 	if (names.count(x)) {
 		auto id = names[x];
-		std::cout << points[id].name << ":";
-		for (auto& str: points[id].intro)std::cout << str << ' ';
+		points[id].show();
 		std::cout << std::endl;
 	} else {
 		std::cout << "Spot not found" << std::endl;
@@ -126,6 +144,11 @@ void qrySpot() {
 }
 
 void shortestPath() {
+	std::cout << "Enter the type of roads you want to query" << std::endl;
+	int x;
+	std::cin >> x;
+
+	sp(x);
 	std::cout << "Enter the two spots' name or id you want to query" << std::endl;
 	std::string s, r;
 	std::cin >> s >> r;
@@ -135,10 +158,10 @@ void shortestPath() {
 	} else {
 		std::cout << "The minimum distance is" << dis[u][v] << '\n';
 		std::cout << "The routine distance is" << dis[u][v] << '\n';
-		int cur = nxt[u][v];
-		while (cur != u) {
-			std::cout << cur << ' ' << nxt[cur][u] << '\n';
-			cur = nxt[cur][u];
+		int now = nxt[u][v];
+		while (now != u) {
+			std::cout << now << ' ' << nxt[now][u] << '\n';
+			now = nxt[now][u];
 		}
 	}
 }
@@ -155,7 +178,8 @@ void tarjan() {
 		inStack[u] = true;
 		s.push(u);
 		int child = 0;
-		for (auto [v, _1, _2]: points[u].e) {
+		for (int v = 0; v < n; ++v) {
+			if (dis[u][v] == 0x3f3f3f3f)continue;
 			if (v == p)continue;
 			if (dfn[v] == -1) {
 				dfs(v, u);
@@ -189,26 +213,33 @@ void showAllPath() {
 	std::cin >> s >> r;
 	int begin = names[s], end = names[r];
 	int cnt = 0;
-	std::vector<int> cur;
+	std::vector<int> path;
 	std::vector<int> vis(n, false);
 	std::vector<std::vector<int>> paths;
 	std::function<void(int)> dfs = [&](int u) {
 		if (u == end) {
 			cnt++;
-			paths.push_back(cur);
+			paths.push_back(path);
 			return;
 		}
 		vis[u] = true;
-		for (auto [v, t, w]: points[u].e) {
-			if (vis[v])continue;
-			cur.push_back(v);
+		for (int v = 0; v < n; ++v) {
+			if (mat[u][v].type || vis[v])continue;
+			path.push_back(v);
 			dfs(v);
-			cur.pop_back();
+			path.pop_back();
 		}
 		vis[u] = false;
 	};
 	if (cnt) {
 		std::cout << "There " << (cnt == 1 ? "is" : "ares") << cnt << " path" << (cnt == 1 ? ":" : "s:") << std::endl;
+		for (auto& x: paths) {
+			int m = x.size();
+			std::cout << "From :" << x[0] << ' ';
+			for (int i = 1; i < m; ++i) {
+
+			}
+		}
 	} else {
 		std::cout << "No path!" << std::endl;
 	}
@@ -222,14 +253,14 @@ void multiPointSP() {
 		std::cin >> a[i];
 	}
 	int ans = 0x3f3f3f3f;
-	int cur = 0;
+	int sum_dis = 0;
 	bool ok = true;
 	std::vector<int> routine;
 	for (int i = 1; i < m; ++i) {
 		if (dis[a[i - 1]][a[i]] == 0x3f3f3f3f) {
 			ok = false;
 		} else {
-			cur += dis[a[i - 1]][a[i]];
+			sum_dis += dis[a[i - 1]][a[i]];
 		}
 	}
 	if (ok) {
@@ -248,29 +279,16 @@ void multiPointSP() {
 void modify() {
 	std::string s, r;
 	std::cin >> s >> r;
-	int begin = names[s], end = names[r];
-	int wp, tp;
-	std::cin >> wp >> tp;
-	bool find = false;
-	for (auto& [v, t, w]: points[begin].e) {
-		if (v == end) {
-			t = tp;
-			w = wp;
-			find = true;
-			break;
-		}
-	}
-	for (auto& [v, t, w]: points[end].e) {
-		if (v == begin) {
-			t = tp;
-			w = wp;
-			find = true;
-			break;
-		}
-	}
-	if (!find) {
-		points[begin].e.emplace_back(end, tp, wp);
-		points[end].e.emplace_back(begin, tp, wp);
+	int u = names[s], v = names[r];
+	int t, len;
+	std::cin >> t >> len;
+	edge now(t, len);
+	int m;
+	std::cin >> m;
+	for (int i = 0; i < m; ++i) {
+		int d, l;
+		std::cin >> d >> l;
+		now.info.emplace_back(d, l);
 	}
 }
 
