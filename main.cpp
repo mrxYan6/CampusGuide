@@ -13,25 +13,26 @@ using i64 = long long;
 
 
 struct edge {
-	int v;
-	int type;//01ren,10che,11ren+che
+	int type;//01 human,10 car,11 human + car
 	int len;
+	std::vector<std::pair<int, int>> info;
 
 	edge() {}
 
-	edge(int v, int type, int len) : v(v), type(type), len(len) {}
-
-
+	edge(int type, int len) : type(type), len(len) {}
 };
 
 struct point {
 	int id;
-	std::string name, intro;
-	std::vector<edge> e;
+	std::string name;
+	std::vector<std::string> intro;
 };
+
 std::vector<point> points;
 std::map<std::string, int> names;
 std::vector<std::vector<int>> dis, nxt;
+std::vector<std::vector<edge>> cur;
+std::vector<std::vector<std::vector<edge>>> mat;
 int n;
 int curType;
 
@@ -53,9 +54,15 @@ void build(int type) {
 		dis = std::vector(n, std::vector<int>(n, 0x3f3f3f3f));
 		nxt = std::vector(n, std::vector<int>(n, -1));
 		for (int i = 0; i < n; ++i) {
-			for (auto [v, t, w]: points[i].e) {
-				if (t & type) {
-					dis[i][v] = std::min(dis[i][v], w);
+			for (int j = 0; j < n; ++j) {
+				for (auto& x: mat[i][j]) {
+					auto [t, w, _] = x;
+					if (t & type) {
+						if (dis[i][j] > w) {
+							cur[i][j] = x;
+							dis[i][j] = w;
+						}
+					}
 				}
 			}
 		}
@@ -69,7 +76,12 @@ void init() {
 
 	for (int i = 0; i < n; ++i) {
 		points[i].id = i + 1;
-		std::cin >> points[i].name >> points[i].intro;
+		int m;
+		std::cin >> points[i].name >> m;
+		points[i].intro.resize(m);
+		for (int j = 0; j < m; ++j) {
+			std::cin >> points[i].intro[j];
+		}
 		names[points[i].name] = i;
 		names[std::to_string(i + 1)] = i;
 	}
@@ -80,10 +92,18 @@ void init() {
 	std::cin >> m;
 	for (int i = 0; i < m; ++i) {
 		int u, v, w, type;
+		int t;
 		std::cin >> u >> v >> w >> type;
 		u--, v--;
-		points[u].e.emplace_back(v, w, type);
-		points[v].e.emplace_back(u, w, type);
+		std::cin >> t;
+		for (int j = 0; j < t; ++j) {
+
+		}
+		mat[u][v].emplace_back(w, type);
+		mat[v][w].emplace_back(w, type);
+
+//		points[u].e.emplace_back(v, w, type);
+//		points[v].e.emplace_back(u, w, type);
 	}
 
 	build(3);
@@ -97,7 +117,9 @@ void qrySpot() {
 	std::cin >> x;
 	if (names.count(x)) {
 		auto id = names[x];
-		std::cout << points[id].name << ":" << points[id].intro << std::endl;
+		std::cout << points[id].name << ":";
+		for (auto& str: points[id].intro)std::cout << str << ' ';
+		std::cout << std::endl;
 	} else {
 		std::cout << "Spot not found" << std::endl;
 	}
