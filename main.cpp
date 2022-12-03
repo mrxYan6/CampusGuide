@@ -13,13 +13,22 @@ using i64 = long long;
 
 
 struct edge {
+	int u, v;
 	int type;//01 human,10 car,11 human + car
 	int len;
 	std::vector<std::pair<int, int>> info;
 
 	edge() : type(0), len(0) {}
 
-	edge(int type, int len) : type(type), len(len) {}
+	edge(int u, int v, int type, int len) : type(type), len(len) {}
+
+	void show() {
+		static char di[4] = {'n', 'w', 'e', 's'};
+		std::cout << "From " << u << " to " << v << ":" << std::endl;
+		for (auto [dir, ln]: info) {
+			std::cout << di[dir] << " " << ln << "m " << std::endl;
+		}
+	}
 };
 
 struct point {
@@ -61,7 +70,7 @@ void build(int type) {
 		for (int i = 0; i < n; ++i) {
 			for (int j = 0; j < n; ++j) {
 				auto x = mat[i][j];
-				auto [t, w, _] = x;
+				auto [_u, _v, t, w, _] = x;
 				if (t & type) {
 					if (dis[i][j] > w) {
 						cur[i][j] = x;
@@ -106,12 +115,12 @@ void init() {
 		std::cin >> u >> v >> w >> type;
 		u--, v--;
 
-		edge pos(w, type);
+		edge pos(u, v, w, type);
 
 		int t;
 		std::cin >> t;
 		for (int j = 0; j < t; ++j) {
-			int dir;//w - western 1,e - eastern 2, s - south 3, n - north 0
+			int dir; //w - western 1,e - eastern 2, s - south 3, n - north 0
 			int len;
 			std::cin >> dir >> len;
 			pos.info.emplace_back(dir, len);
@@ -119,6 +128,7 @@ void init() {
 
 		//generate another edge
 		auto neg = pos;
+		std::swap(neg.u, neg.v);
 		std::reverse(neg.info.begin(), neg.info.end());
 		for (auto& x: neg.info) {
 			x.first = x.first ^ 3;
@@ -235,9 +245,8 @@ void showAllPath() {
 		std::cout << "There " << (cnt == 1 ? "is" : "ares") << cnt << " path" << (cnt == 1 ? ":" : "s:") << std::endl;
 		for (auto& x: paths) {
 			int m = x.size();
-			std::cout << "From :" << x[0] << ' ';
 			for (int i = 1; i < m; ++i) {
-
+				mat[x[i - 1]][x[i]].show();
 			}
 		}
 	} else {
@@ -282,7 +291,7 @@ void modify() {
 	int u = names[s], v = names[r];
 	int t, len;
 	std::cin >> t >> len;
-	edge now(t, len);
+	edge now(u, v, t, len);
 	int m;
 	std::cin >> m;
 	for (int i = 0; i < m; ++i) {
@@ -290,6 +299,8 @@ void modify() {
 		std::cin >> d >> l;
 		now.info.emplace_back(d, l);
 	}
+	mat[u][v] = now;
+	std::cout << "Succeed" << std::endl;
 }
 
 void menu() {
