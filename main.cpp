@@ -176,7 +176,6 @@ void shortestPath() {
 	}
 }
 
-
 void tarjan() {
 	build(3);
 	std::stack<int> s;
@@ -285,7 +284,7 @@ void multiPointSP() {
 	}
 };
 
-void modify() {
+void modify_r() {
 	std::string s, r;
 	std::cin >> s >> r;
 	int u = names[s], v = names[r];
@@ -303,6 +302,21 @@ void modify() {
 	std::cout << "Succeed" << std::endl;
 }
 
+void modify_p() {
+	std::string s;
+	std::cin >> s;
+	int i = names[s];
+	points[i].id = i + 1;
+	int m;
+	std::cin >> points[i].name >> m;
+	points[i].intro.resize(m);
+	for (int j = 0; j < m; ++j) {
+		std::cin >> points[i].intro[j];
+	}
+	names[points[i].name] = i;
+	names[std::to_string(i + 1)] = i;
+}
+
 void menu() {
 	std::cout << "-------------------------------------------------------------------" << std::endl;
 	std::cout << "|       1.Search spot                                             |" << std::endl;
@@ -311,6 +325,7 @@ void menu() {
 	std::cout << "|       4.Query all path between two spots                        |" << std::endl;
 	std::cout << "|       5.Query shortest path between several spots               |" << std::endl;
 	std::cout << "|       6.Modify road information                                 |" << std::endl;
+	std::cout << "|       7.Modify spot information                                 |" << std::endl;
 	std::cout << "-------------------------------------------------------------------" << std::endl;
 }
 
